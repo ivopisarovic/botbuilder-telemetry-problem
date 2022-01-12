@@ -7,12 +7,14 @@ from datetime import datetime
 
 from aiohttp import web
 from aiohttp.web import Request, Response, json_response
+from botbuilder.applicationinsights import ApplicationInsightsTelemetryClient
 from botbuilder.core import (
     BotFrameworkAdapterSettings,
     TurnContext,
-    BotFrameworkAdapter,
+    BotFrameworkAdapter, TelemetryLoggerMiddleware,
 )
 from botbuilder.core.integration import aiohttp_error_middleware
+from botbuilder.integration.applicationinsights.aiohttp import AiohttpTelemetryProcessor
 from botbuilder.schema import Activity, ActivityTypes
 
 from bot import MyBot
@@ -24,6 +26,12 @@ CONFIG = DefaultConfig()
 # See https://aka.ms/about-bot-adapter to learn more about how bots work.
 SETTINGS = BotFrameworkAdapterSettings(CONFIG.APP_ID, CONFIG.APP_PASSWORD)
 ADAPTER = BotFrameworkAdapter(SETTINGS)
+
+TELEMETRY_CLIENT = ApplicationInsightsTelemetryClient(
+    CONFIG.APPINSIGHTS_INSTRUMENTATION_KEY, telemetry_processor=AiohttpTelemetryProcessor(), client_queue_size=1
+)
+TELEMETRY_LOGGER_MIDDLEWARE = TelemetryLoggerMiddleware(TELEMETRY_CLIENT, True)
+ADAPTER.use(TELEMETRY_LOGGER_MIDDLEWARE)
 
 
 # Catch-all for errors.
